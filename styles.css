@@ -757,3 +757,235 @@ select option { background: var(--dark); }
   .logo-flame { font-size: 22px; }
   .live-badge { display: none; }
 }
+
+/* ─── ON TRACK BANNER ────────────────────────────── */
+.on-track-banner {
+  background: linear-gradient(90deg, #0a1a0a, #0d2a10, #0a1a0a);
+  border-bottom: 2px solid var(--green);
+  padding: 10px 16px;
+  box-shadow: 0 4px 20px rgba(0,230,118,0.2);
+  animation: banner-pulse 2s ease-in-out infinite;
+}
+
+@keyframes banner-pulse {
+  0%,100% { box-shadow: 0 4px 20px rgba(0,230,118,0.15); }
+  50%      { box-shadow: 0 4px 32px rgba(0,230,118,0.4); }
+}
+
+.on-track-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.on-track-dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.on-track-dots span {
+  width: 8px; height: 8px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: dot-wave 1.2s ease-in-out infinite;
+}
+.on-track-dots span:nth-child(2) { animation-delay: 0.2s; }
+.on-track-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dot-wave {
+  0%,100% { transform: scaleY(1); opacity:0.5; }
+  50%      { transform: scaleY(1.8); opacity:1; }
+}
+
+.on-track-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--green);
+  opacity: 0.8;
+}
+
+.on-track-name {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.on-track-cat {
+  font-size: 12px;
+  color: var(--green);
+  background: var(--green-dim);
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-weight: 600;
+}
+
+/* ─── STARTLIST ROW ON TRACK ─────────────────────── */
+.row-on-track td {
+  background: rgba(0,230,118,0.06) !important;
+}
+.row-on-track:hover td {
+  background: rgba(0,230,118,0.1) !important;
+}
+
+.inline-dots {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.inline-dots span {
+  width: 5px; height: 5px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: dot-wave 1.2s ease-in-out infinite;
+}
+.inline-dots span:nth-child(2) { animation-delay: 0.2s; }
+.inline-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+.status-running {
+  background: var(--green-dim);
+  color: var(--green);
+  animation: pulse-text 1.5s ease-in-out infinite;
+}
+@keyframes pulse-text {
+  0%,100% { opacity:1; }
+  50%      { opacity:0.6; }
+}
+
+/* ─── ON TRACK ADMIN CONTROL ─────────────────────── */
+.card-ontrack {
+  border-color: rgba(0,230,118,0.2);
+}
+
+.hint-text {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.ontrack-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 360px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--dark-border) transparent;
+}
+
+.ontrack-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: var(--dark);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  color: var(--text-primary);
+}
+
+.ontrack-btn:hover {
+  background: var(--dark-hover);
+  border-color: var(--green);
+  transform: translateX(2px);
+}
+
+.ontrack-btn-active {
+  background: rgba(0,230,118,0.08) !important;
+  border-color: var(--green) !important;
+  box-shadow: 0 0 12px rgba(0,230,118,0.15);
+}
+
+.ontrack-num {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--neon);
+  min-width: 28px;
+  text-align: center;
+  background: var(--neon-dim);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.ontrack-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 1px;
+}
+.ontrack-name {
+  font-size: 14px;
+  font-weight: 600;
+  display: block;
+}
+.ontrack-cat {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: block;
+}
+
+.ontrack-arrow { color: var(--text-muted); font-size: 12px; margin-left: auto; }
+
+.ontrack-running-dots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin-left: auto;
+}
+.ontrack-running-dots span {
+  width: 6px; height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: dot-wave 1.2s ease-in-out infinite;
+}
+.ontrack-running-dots span:nth-child(2) { animation-delay: 0.2s; }
+.ontrack-running-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+/* ─── ADMIN STARTLIST PREVIEW ────────────────────── */
+.admin-startlist-preview {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--dark-border) transparent;
+}
+
+.preview-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--dark-border);
+  margin-bottom: 4px;
+}
+
+.preview-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  background: var(--dark);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+.preview-num  { font-family: var(--font-mono); font-size: 12px; color: var(--neon); min-width: 24px; text-align: center; }
+.preview-name { flex: 1; font-weight: 500; }
+.preview-cat  { font-size: 11px; color: var(--text-muted); }
+.preview-del  { padding: 3px 7px; font-size: 11px; margin-left: auto; }
