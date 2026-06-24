@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MSL – Moravskoslezská liga požárního sportu</title>
+  <meta name="description" content="Živé výsledky Moravskoslezské ligy požárního sportu" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- LOGIN OVERLAY -->
+    <div id="login-overlay" class="hidden">
+      <div class="login-box">
+        <div class="login-logo">🔥</div>
+        <h2>Admin přístup</h2>
+        <p>MSL Administrace</p>
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" id="login-email" placeholder="halatatom@gmail.com" autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label>Heslo</label>
+          <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <button class="btn-primary" onclick="handleLogin()">Přihlásit se</button>
+        <div id="login-error" class="error-msg hidden"></div>
+        <button class="btn-ghost" onclick="closeLogin()">← Zpět na výsledky</button>
+      </div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="main-header">
+      <div class="header-inner">
+        <div class="header-brand">
+          <div class="logo-flame">🔥</div>
+          <div class="brand-text">
+            <span class="brand-msl">MSL</span>
+            <span class="brand-sub">Moravskoslezská liga</span>
+          </div>
+          <div class="live-badge" id="live-badge">
+            <span class="live-dot"></span>ŽIVĚ
+          </div>
+        </div>
+        <nav class="header-nav">
+          <button class="nav-btn active" onclick="showPage('results')" id="nav-results">Výsledky</button>
+          <button class="nav-btn" onclick="showPage('startlist')" id="nav-startlist">Startovní listina</button>
+          <button class="nav-btn admin-btn" onclick="showAdminOrLogin()" id="nav-admin">⚙ Admin</button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+      <!-- RESULTS PAGE -->
+      <div id="page-results" class="page active">
+        <div class="page-header">
+          <h1 class="page-title">Živé výsledky</h1>
+          <div id="event-info" class="event-info">
+            <span id="event-name">Závod MSL 2025</span>
+            <span class="event-sep">·</span>
+            <span id="event-date" class="event-date"></span>
+          </div>
+        </div>
+
+        <!-- CATEGORY TABS -->
+        <div class="category-tabs" id="category-tabs">
+          <button class="cat-tab active" onclick="selectCategory('muzi')" data-cat="muzi">Muži</button>
+          <button class="cat-tab" onclick="selectCategory('zeny')" data-cat="zeny">Ženy</button>
+          <button class="cat-tab" onclick="selectCategory('dorost')" data-cat="dorost">Dorost</button>
+          <button class="cat-tab" onclick="selectCategory('muzi35')" data-cat="muzi35">Muži 35+</button>
+          <button class="cat-tab" onclick="selectCategory('zeny35')" data-cat="zeny35">Ženy 35+</button>
+          <button class="cat-tab" onclick="selectCategory('muzi50')" data-cat="muzi50">Muži 50+</button>
+        </div>
+
+        <!-- RESULTS TABLE -->
+        <div class="table-wrapper">
+          <table class="results-table" id="results-table">
+            <thead>
+              <tr>
+                <th class="col-rank">#</th>
+                <th class="col-team">Tým</th>
+                <th class="col-time">Levý proud</th>
+                <th class="col-time">Pravý proud</th>
+                <th class="col-result">Výsledný čas</th>
+                <th class="col-status">Status</th>
+              </tr>
+            </thead>
+            <tbody id="results-body">
+              <tr class="empty-row">
+                <td colspan="6">
+                  <div class="empty-state">
+                    <span class="empty-icon">⏳</span>
+                    <span>Výsledky se načítají...</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- START LIST PAGE -->
+      <div id="page-startlist" class="page hidden">
+        <div class="page-header">
+          <h1 class="page-title">Startovní listina</h1>
+        </div>
+        <div class="category-tabs" id="start-category-tabs">
+          <button class="cat-tab active" onclick="selectStartCategory('muzi')" data-cat="muzi">Muži</button>
+          <button class="cat-tab" onclick="selectStartCategory('zeny')" data-cat="zeny">Ženy</button>
+          <button class="cat-tab" onclick="selectStartCategory('dorost')" data-cat="dorost">Dorost</button>
+          <button class="cat-tab" onclick="selectStartCategory('muzi35')" data-cat="muzi35">Muži 35+</button>
+          <button class="cat-tab" onclick="selectStartCategory('zeny35')" data-cat="zeny35">Ženy 35+</button>
+          <button class="cat-tab" onclick="selectStartCategory('muzi50')" data-cat="muzi50">Muži 50+</button>
+        </div>
+        <div class="table-wrapper">
+          <table class="results-table" id="startlist-table">
+            <thead>
+              <tr>
+                <th class="col-rank">Start č.</th>
+                <th class="col-team">Tým</th>
+                <th class="col-team">Kategorie</th>
+              </tr>
+            </thead>
+            <tbody id="startlist-body">
+              <tr class="empty-row">
+                <td colspan="3">
+                  <div class="empty-state">
+                    <span class="empty-icon">📋</span>
+                    <span>Startovní listina není k dispozici</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ADMIN PAGE -->
+      <div id="page-admin" class="page hidden">
+        <div class="page-header">
+          <h1 class="page-title">⚙ Administrace</h1>
+          <button class="btn-danger-sm" onclick="handleLogout()">Odhlásit se</button>
+        </div>
+
+        <div class="admin-grid">
+
+          <!-- QUICK RESULT FORM -->
+          <div class="admin-card card-primary">
+            <div class="card-header">
+              <h2>⚡ Rychlé zadání výsledku</h2>
+            </div>
+            <div class="admin-form" id="result-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Kategorie</label>
+                  <select id="r-category">
+                    <option value="muzi">Muži</option>
+                    <option value="zeny">Ženy</option>
+                    <option value="dorost">Dorost</option>
+                    <option value="muzi35">Muži 35+</option>
+                    <option value="zeny35">Ženy 35+</option>
+                    <option value="muzi50">Muži 50+</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Tým</label>
+                  <select id="r-team"></select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Levý proud <span class="hint">(např. 14,487)</span></label>
+                  <input type="text" id="r-left" placeholder="14,487" pattern="[0-9]+,[0-9]+" />
+                </div>
+                <div class="form-group">
+                  <label>Pravý proud <span class="hint">(např. 15,155)</span></label>
+                  <input type="text" id="r-right" placeholder="15,155" pattern="[0-9]+,[0-9]+" />
+                </div>
+                <div class="form-group">
+                  <label>Status</label>
+                  <select id="r-status">
+                    <option value="OK">✅ OK</option>
+                    <option value="NP">⚠ NP (nezahájena)</option>
+                    <option value="N">❌ N (neplatný)</option>
+                    <option value="D">🚧 D (diskvalifikace)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn-primary btn-large" onclick="saveResult()">💾 Uložit výsledek</button>
+                <button class="btn-secondary" onclick="clearResultForm()">Vymazat</button>
+              </div>
+              <div id="result-msg" class="msg hidden"></div>
+            </div>
+          </div>
+
+          <!-- EVENT SETTINGS -->
+          <div class="admin-card">
+            <div class="card-header">
+              <h2>📅 Nastavení závodu</h2>
+            </div>
+            <div class="admin-form">
+              <div class="form-group">
+                <label>Název závodu</label>
+                <input type="text" id="event-name-input" placeholder="Závod MSL 2025" />
+              </div>
+              <div class="form-group">
+                <label>Datum</label>
+                <input type="date" id="event-date-input" />
+              </div>
+              <button class="btn-primary" onclick="saveEventSettings()">Uložit nastavení</button>
+            </div>
+          </div>
+
+          <!-- TEAMS MANAGEMENT -->
+          <div class="admin-card">
+            <div class="card-header">
+              <h2>🏆 Správa týmů</h2>
+            </div>
+            <div class="admin-form">
+              <div class="form-row">
+                <div class="form-group flex-grow">
+                  <label>Název týmu</label>
+                  <input type="text" id="new-team-name" placeholder="SDH Název" />
+                </div>
+                <div class="form-group">
+                  <label>Kategorie</label>
+                  <select id="new-team-cat">
+                    <option value="muzi">Muži</option>
+                    <option value="zeny">Ženy</option>
+                    <option value="dorost">Dorost</option>
+                    <option value="muzi35">Muži 35+</option>
+                    <option value="zeny35">Ženy 35+</option>
+                    <option value="muzi50">Muži 50+</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn-primary" onclick="addTeam()">➕ Přidat tým</button>
+              <div id="teams-msg" class="msg hidden"></div>
+              <div class="teams-list" id="teams-list"></div>
+            </div>
+          </div>
+
+          <!-- STARTLIST MANAGEMENT -->
+          <div class="admin-card">
+            <div class="card-header">
+              <h2>📋 Startovní listina</h2>
+            </div>
+            <div class="admin-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Startovní č.</label>
+                  <input type="number" id="sl-number" placeholder="1" min="1" />
+                </div>
+                <div class="form-group flex-grow">
+                  <label>Tým</label>
+                  <select id="sl-team"></select>
+                </div>
+                <div class="form-group">
+                  <label>Kategorie</label>
+                  <select id="sl-category">
+                    <option value="muzi">Muži</option>
+                    <option value="zeny">Ženy</option>
+                    <option value="dorost">Dorost</option>
+                    <option value="muzi35">Muži 35+</option>
+                    <option value="zeny35">Ženy 35+</option>
+                    <option value="muzi50">Muži 50+</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn-primary" onclick="addStartEntry()">➕ Přidat do listiny</button>
+              <button class="btn-danger-sm" style="margin-left:8px" onclick="clearStartlist()">🗑 Vymazat listinu</button>
+              <div id="startlist-msg" class="msg hidden"></div>
+            </div>
+          </div>
+
+          <!-- RESULTS MANAGEMENT -->
+          <div class="admin-card card-wide">
+            <div class="card-header">
+              <h2>📊 Správa výsledků</h2>
+              <div class="card-header-actions">
+                <select id="admin-cat-filter" onchange="renderAdminResults()">
+                  <option value="muzi">Muži</option>
+                  <option value="zeny">Ženy</option>
+                  <option value="dorost">Dorost</option>
+                  <option value="muzi35">Muži 35+</option>
+                  <option value="zeny35">Ženy 35+</option>
+                  <option value="muzi50">Muži 50+</option>
+                </select>
+                <button class="btn-danger-sm" onclick="clearCategoryResults()">🗑 Vymazat kategorii</button>
+              </div>
+            </div>
+            <div class="table-wrapper table-compact">
+              <table class="results-table" id="admin-results-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Tým</th>
+                    <th>Levý</th>
+                    <th>Pravý</th>
+                    <th>Výsledek</th>
+                    <th>Status</th>
+                    <th>Akce</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-results-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="main-footer">
+      <div class="footer-inner">
+        <span>🔥 MSL – Moravskoslezská liga požárního sportu</span>
+        <span id="footer-time"></span>
+      </div>
+    </footer>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="toast hidden"></div>
+  </div>
+
+  <!-- FIREBASE SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, set, get, push, remove, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    // ──────────────────────────────────────────────────
+    // 🔧 FIREBASE KONFIGURACE – vyplňte svými údaji
+    // ──────────────────────────────────────────────────
+    const firebaseConfig = {
+      apiKey: "AIzaSyCiqu4GDNmx7ALTAF1GPi6rJ-F8AuHxNL4",
+      authDomain: "msl-a4938.firebaseapp.com",
+      databaseURL: "https://msl-a4938-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "msl-a4938",
+      storageBucket: "msl-a4938.firebasestorage.app",
+      messagingSenderId: "233603290123",
+      appId: "1:233603290123:web:074a734d3dcf4c12a0630e"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    // ──────────────────────────────────────────────────
+    // STAV APLIKACE
+    // ──────────────────────────────────────────────────
+    let currentUser = null;
+    let currentCategory = 'muzi';
+    let currentStartCategory = 'muzi';
+    let allResults = {};   // { category: { id: result } }
+    let allTeams = {};     // { id: team }
+    let allStartlist = {}; // { id: entry }
+    let eventSettings = {};
+
+    // ──────────────────────────────────────────────────
+    // AUTH
+    // ──────────────────────────────────────────────────
+    onAuthStateChanged(auth, user => {
+      currentUser = user;
+      if (user) {
+        document.getElementById('nav-admin').classList.add('logged-in');
+        if (document.getElementById('page-admin').classList.contains('active')) {
+          loadAdminData();
+        }
+      } else {
+        document.getElementById('nav-admin').classList.remove('logged-in');
+      }
+    });
+
+    window.handleLogin = async function() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const errEl = document.getElementById('login-error');
+      errEl.classList.add('hidden');
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        document.getElementById('login-overlay').classList.add('hidden');
+        showPage('admin');
+        showToast('Přihlášení úspěšné ✓', 'success');
+      } catch (e) {
+        errEl.textContent = 'Nesprávné přihlašovací údaje';
+        errEl.classList.remove('hidden');
+      }
+    };
+
+    window.handleLogout = async function() {
+      await signOut(auth);
+      showPage('results');
+      showToast('Odhlášení úspěšné');
+    };
+
+    window.showAdminOrLogin = function() {
+      if (currentUser) {
+        showPage('admin');
+      } else {
+        document.getElementById('login-overlay').classList.remove('hidden');
+        document.getElementById('login-email').focus();
+      }
+    };
+
+    window.closeLogin = function() {
+      document.getElementById('login-overlay').classList.add('hidden');
+    };
+
+    // Enter key on login
+    document.getElementById('login-password').addEventListener('keydown', e => {
+      if (e.key === 'Enter') window.handleLogin();
+    });
+
+    // ──────────────────────────────────────────────────
+    // REALTIME LISTENERS
+    // ──────────────────────────────────────────────────
+    onValue(ref(db, 'results'), snap => {
+      allResults = snap.val() || {};
+      renderResults();
+      renderAdminResults();
+    });
+
+    onValue(ref(db, 'teams'), snap => {
+      allTeams = snap.val() || {};
+      renderTeamsList();
+      populateTeamSelects();
+    });
+
+    onValue(ref(db, 'startlist'), snap => {
+      allStartlist = snap.val() || {};
+      renderStartlist();
+    });
+
+    onValue(ref(db, 'event'), snap => {
+      eventSettings = snap.val() || {};
+      const nameEl = document.getElementById('event-name');
+      const dateEl = document.getElementById('event-date');
+      if (nameEl && eventSettings.name) nameEl.textContent = eventSettings.name;
+      if (dateEl && eventSettings.date) {
+        dateEl.textContent = formatDisplayDate(eventSettings.date);
+      }
+      if (document.getElementById('event-name-input')) {
+        document.getElementById('event-name-input').value = eventSettings.name || '';
+        document.getElementById('event-date-input').value = eventSettings.date || '';
+      }
+    });
+
+    // ──────────────────────────────────────────────────
+    // VÝSLEDKY – LOGIKA
+    // ──────────────────────────────────────────────────
+    function parseTime(str) {
+      if (!str) return null;
+      return parseFloat(str.replace(',', '.'));
+    }
+
+    function formatTime(str) {
+      if (!str) return '–';
+      return str;
+    }
+
+    function getResultTime(result) {
+      if (result.status && result.status !== 'OK') return null;
+      const left = parseTime(result.leftTime);
+      const right = parseTime(result.rightTime);
+      if (left === null || right === null) return null;
+      return Math.max(left, right); // horší proud = výsledný čas
+    }
+
+    function formatResultTime(result) {
+      const t = getResultTime(result);
+      if (t === null) return result.status || '–';
+      // Format back to xx,xxx
+      return t.toFixed(3).replace('.', ',');
+    }
+
+    function sortResults(results) {
+      return results.sort((a, b) => {
+        const tA = getResultTime(a);
+        const tB = getResultTime(b);
+        if (tA !== null && tB !== null) return tA - tB;
+        if (tA !== null) return -1;
+        if (tB !== null) return 1;
+        return 0;
+      });
+    }
+
+    window.renderResults = function() {
+      const tbody = document.getElementById('results-body');
+      if (!tbody) return;
+      const catResults = allResults[currentCategory] ? Object.values(allResults[currentCategory]) : [];
+      if (catResults.length === 0) {
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="6"><div class="empty-state"><span class="empty-icon">🏁</span><span>Žádné výsledky pro tuto kategorii</span></div></td></tr>`;
+        return;
+      }
+      const sorted = sortResults([...catResults]);
+      let html = '';
+      let rank = 1;
+      let validCount = 0;
+      sorted.forEach((r, i) => {
+        const isValid = getResultTime(r) !== null;
+        if (isValid) validCount++;
+        const displayRank = isValid ? rank++ : '–';
+        const rowClass = isValid && displayRank <= 3 ? `top-${displayRank}` : (isValid ? '' : 'invalid-row');
+        const statusBadge = r.status === 'OK' ? '' : `<span class="status-badge status-${r.status}">${r.status}</span>`;
+        const resultTime = isValid ? formatResultTime(r) : (r.status || '–');
+        html += `
+          <tr class="result-row ${rowClass}" data-id="${r.id}">
+            <td class="col-rank">${displayRank <= 3 && isValid ? `<span class="rank-badge rank-${displayRank}">${displayRank}</span>` : displayRank}</td>
+            <td class="col-team">${escHtml(r.teamName || '?')}</td>
+            <td class="col-time mono">${formatTime(r.leftTime)}</td>
+            <td class="col-time mono">${formatTime(r.rightTime)}</td>
+            <td class="col-result mono ${isValid ? 'result-time' : 'result-invalid'}">${resultTime}</td>
+            <td class="col-status">${statusBadge || '<span class="status-ok">✓</span>'}</td>
+          </tr>`;
+      });
+      // Animated update
+      tbody.style.opacity = '0.5';
+      setTimeout(() => {
+        tbody.innerHTML = html;
+        tbody.style.opacity = '1';
+      }, 150);
+    };
+
+    window.selectCategory = function(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('#category-tabs .cat-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.cat === cat);
+      });
+      renderResults();
+    };
+
+    window.selectStartCategory = function(cat) {
+      currentStartCategory = cat;
+      document.querySelectorAll('#start-category-tabs .cat-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.cat === cat);
+      });
+      renderStartlist();
+    };
+
+    window.renderStartlist = function() {
+      const tbody = document.getElementById('startlist-body');
+      if (!tbody) return;
+      const entries = Object.values(allStartlist)
+        .filter(e => e.category === currentStartCategory)
+        .sort((a, b) => (a.startNumber || 0) - (b.startNumber || 0));
+      if (entries.length === 0) {
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="3"><div class="empty-state"><span class="empty-icon">📋</span><span>Žádné záznamy</span></div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = entries.map(e => `
+        <tr class="result-row">
+          <td class="col-rank mono">${e.startNumber}</td>
+          <td class="col-team">${escHtml(e.teamName || '?')}</td>
+          <td class="col-team">${categoryLabel(e.category)}</td>
+        </tr>`).join('');
+    };
+
+    // ──────────────────────────────────────────────────
+    // ADMIN – VÝSLEDKY
+    // ──────────────────────────────────────────────────
+    window.saveResult = async function() {
+      const cat = document.getElementById('r-category').value;
+      const teamSel = document.getElementById('r-team');
+      const teamName = teamSel.options[teamSel.selectedIndex]?.text || '';
+      const teamId = teamSel.value;
+      const left = document.getElementById('r-left').value.trim();
+      const right = document.getElementById('r-right').value.trim();
+      const status = document.getElementById('r-status').value;
+      if (!teamId) { showMsg('result-msg', 'Vyberte tým!', 'error'); return; }
+      if (status === 'OK' && (!left || !right)) { showMsg('result-msg', 'Vyplňte oba časy!', 'error'); return; }
+
+      const result = {
+        id: teamId,
+        teamName,
+        leftTime: left || null,
+        rightTime: right || null,
+        status,
+        updatedAt: Date.now()
+      };
+      try {
+        await set(ref(db, `results/${cat}/${teamId}`), result);
+        showMsg('result-msg', '✓ Výsledek uložen!', 'success');
+        showToast(`✓ ${teamName} – výsledek uložen`, 'success');
+        clearResultForm();
+      } catch(e) {
+        showMsg('result-msg', 'Chyba: ' + e.message, 'error');
+      }
+    };
+
+    window.clearResultForm = function() {
+      document.getElementById('r-left').value = '';
+      document.getElementById('r-right').value = '';
+      document.getElementById('r-status').value = 'OK';
+    };
+
+    window.renderAdminResults = function() {
+      const tbody = document.getElementById('admin-results-body');
+      if (!tbody) return;
+      const cat = document.getElementById('admin-cat-filter')?.value || 'muzi';
+      const catResults = allResults[cat] ? Object.values(allResults[cat]) : [];
+      const sorted = sortResults([...catResults]);
+      if (sorted.length === 0) {
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="7"><div class="empty-state"><span>Žádné výsledky</span></div></td></tr>`;
+        return;
+      }
+      let rank = 1;
+      tbody.innerHTML = sorted.map((r, i) => {
+        const isValid = getResultTime(r) !== null;
+        const dispRank = isValid ? rank++ : '–';
+        return `<tr class="result-row ${isValid ? '' : 'invalid-row'}">
+          <td>${dispRank}</td>
+          <td>${escHtml(r.teamName || '?')}</td>
+          <td class="mono">${r.leftTime || '–'}</td>
+          <td class="mono">${r.rightTime || '–'}</td>
+          <td class="mono ${isValid ? 'result-time' : ''}">${isValid ? formatResultTime(r) : '–'}</td>
+          <td><span class="status-badge status-${r.status}">${r.status}</span></td>
+          <td><button class="btn-danger-sm" onclick="deleteResult('${cat}','${r.id}')">🗑</button></td>
+        </tr>`;
+      }).join('');
+    };
+
+    window.deleteResult = async function(cat, id) {
+      if (!confirm('Smazat tento výsledek?')) return;
+      await remove(ref(db, `results/${cat}/${id}`));
+      showToast('Výsledek smazán');
+    };
+
+    window.clearCategoryResults = async function() {
+      const cat = document.getElementById('admin-cat-filter').value;
+      if (!confirm(`Smazat VŠECHNY výsledky kategorie "${categoryLabel(cat)}"?`)) return;
+      await remove(ref(db, `results/${cat}`));
+      showToast('Výsledky kategorie smazány');
+    };
+
+    // ──────────────────────────────────────────────────
+    // ADMIN – TÝMY
+    // ──────────────────────────────────────────────────
+    window.addTeam = async function() {
+      const name = document.getElementById('new-team-name').value.trim();
+      const cat = document.getElementById('new-team-cat').value;
+      if (!name) { showMsg('teams-msg', 'Zadejte název týmu!', 'error'); return; }
+      const newRef = push(ref(db, 'teams'));
+      await set(newRef, { id: newRef.key, name, category: cat });
+      document.getElementById('new-team-name').value = '';
+      showMsg('teams-msg', `✓ Tým "${name}" přidán`, 'success');
+    };
+
+    window.deleteTeam = async function(id) {
+      if (!confirm('Smazat tento tým?')) return;
+      await remove(ref(db, `teams/${id}`));
+    };
+
+    window.renderTeamsList = function() {
+      const el = document.getElementById('teams-list');
+      if (!el) return;
+      const teams = Object.values(allTeams).sort((a, b) => a.name.localeCompare(b.name));
+      if (teams.length === 0) { el.innerHTML = '<p class="empty-teams">Žádné týmy</p>'; return; }
+      el.innerHTML = teams.map(t => `
+        <div class="team-chip">
+          <div>
+            <span class="team-chip-name">${escHtml(t.name)}</span>
+            <span class="team-chip-cat">${categoryLabel(t.category)}</span>
+          </div>
+          <button class="btn-danger-sm" onclick="deleteTeam('${t.id}')">✕</button>
+        </div>`).join('');
+    };
+
+    window.populateTeamSelects = function() {
+      const selects = ['r-team', 'sl-team'];
+      selects.forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        const currentVal = sel.value;
+        const teams = Object.values(allTeams).sort((a, b) => a.name.localeCompare(b.name));
+        sel.innerHTML = '<option value="">– Vyberte tým –</option>' +
+          teams.map(t => `<option value="${t.id}">${escHtml(t.name)} (${categoryLabel(t.category)})</option>`).join('');
+        if (currentVal) sel.value = currentVal;
+      });
+    };
+
+    // ──────────────────────────────────────────────────
+    // ADMIN – STARTOVNÍ LISTINA
+    // ──────────────────────────────────────────────────
+    window.addStartEntry = async function() {
+      const num = document.getElementById('sl-number').value;
+      const teamSel = document.getElementById('sl-team');
+      const teamName = teamSel.options[teamSel.selectedIndex]?.text?.split(' (')[0] || '';
+      const teamId = teamSel.value;
+      const cat = document.getElementById('sl-category').value;
+      if (!num || !teamId) { showMsg('startlist-msg', 'Vyplňte číslo a tým!', 'error'); return; }
+      const newRef = push(ref(db, 'startlist'));
+      await set(newRef, { id: newRef.key, startNumber: parseInt(num), teamId, teamName, category: cat });
+      document.getElementById('sl-number').value = '';
+      showMsg('startlist-msg', `✓ Přidáno`, 'success');
+    };
+
+    window.clearStartlist = async function() {
+      if (!confirm('Smazat celou startovní listinu?')) return;
+      await remove(ref(db, 'startlist'));
+    };
+
+    // ──────────────────────────────────────────────────
+    // EVENT SETTINGS
+    // ──────────────────────────────────────────────────
+    window.saveEventSettings = async function() {
+      const name = document.getElementById('event-name-input').value.trim();
+      const date = document.getElementById('event-date-input').value;
+      await set(ref(db, 'event'), { name, date });
+      showToast('✓ Nastavení uloženo', 'success');
+    };
+
+    // ──────────────────────────────────────────────────
+    // NAVIGATION
+    // ──────────────────────────────────────────────────
+    window.showPage = function(page) {
+      if (page === 'admin' && !currentUser) { window.showAdminOrLogin(); return; }
+      ['results', 'startlist', 'admin'].forEach(p => {
+        document.getElementById(`page-${p}`).classList.toggle('active', p === page);
+        document.getElementById(`page-${p}`).classList.toggle('hidden', p !== page);
+        const nav = document.getElementById(`nav-${p}`);
+        if (nav) nav.classList.toggle('active', p === page);
+      });
+      if (page === 'admin') {
+        renderAdminResults();
+        renderTeamsList();
+        populateTeamSelects();
+      }
+    };
+
+    // ──────────────────────────────────────────────────
+    // HELPERS
+    // ──────────────────────────────────────────────────
+    function escHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function categoryLabel(cat) {
+      const map = { muzi:'Muži', zeny:'Ženy', dorost:'Dorost', muzi35:'Muži 35+', zeny35:'Ženy 35+', muzi50:'Muži 50+' };
+      return map[cat] || cat;
+    }
+
+    function formatDisplayDate(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('cs-CZ', { day:'numeric', month:'long', year:'numeric' });
+    }
+
+    function showMsg(id, text, type) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = text;
+      el.className = `msg msg-${type}`;
+      setTimeout(() => el.classList.add('hidden'), 3000);
+    }
+
+    window.showToast = function(msg, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = `toast toast-${type}`;
+      setTimeout(() => toast.classList.add('hidden'), 3000);
+    };
+
+    // Footer clock
+    function updateClock() {
+      const el = document.getElementById('footer-time');
+      if (el) el.textContent = new Date().toLocaleTimeString('cs-CZ');
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Load admin data if navigating directly to admin
+    window.loadAdminData = function() {
+      renderTeamsList();
+      populateTeamSelects();
+      renderAdminResults();
+    };
+
+    // Focus shortcut: press 'A' to focus left time input in admin
+    document.addEventListener('keydown', e => {
+      if (e.altKey && e.key === 'r') {
+        document.getElementById('r-left')?.focus();
+      }
+    });
+
+  </script>
+  <script src="app.js"></script>
+</body>
+</html>
