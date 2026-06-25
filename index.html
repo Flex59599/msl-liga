@@ -797,6 +797,9 @@
     }
 
     function startSpotifyPolling() {
+      // Hide login, show playing state container
+      document.getElementById('spotify-login-state').style.display = 'none';
+      document.getElementById('spotify-playing-state').style.display = 'block';
       fetchNowPlaying();
       spotifyInterval = setInterval(fetchNowPlaying, 5000);
     }
@@ -888,6 +891,10 @@
     }
 
     // Init Spotify on load
+    // Always start with login state visible
+    document.getElementById('spotify-bar').classList.remove('hidden');
+    document.getElementById('spotify-login-state').style.display = 'flex';
+    document.getElementById('spotify-playing-state').style.display = 'none';
     spotifyCheckCallback();
 
 
