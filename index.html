@@ -78,6 +78,16 @@
         <button class="spotify-auth-btn" onclick="spotifyLogin()">&#128279; Přihlásit přes Spotify</button>
         <a href="https://open.spotify.com/playlist/036pMS1gt10q1tbRdTwCSM?si=c2522ebb9ba141a0&pt=76844afb646dcb49194afb37839fc377" target="_blank" class="spotify-add-btn">+ Přidat do playlistu</a>
       </div>
+      <!-- OFFLINE STATE (nic nehraje, divák) -->
+      <div id="spotify-offline" class="spotify-bar-inner" style="display:none">
+        <div class="spotify-cover-placeholder">&#9835;</div>
+        <div class="spotify-info">
+          <span class="spotify-label">&#127925; SPOTIFY</span>
+          <span style="color:#7a8fa8;font-size:13px">Momentálně nic nehraje</span>
+        </div>
+        <a href="https://open.spotify.com/playlist/036pMS1gt10q1tbRdTwCSM?si=c2522ebb9ba141a0&pt=76844afb646dcb49194afb37839fc377" target="_blank" class="spotify-add-btn">+ Přidat do playlistu</a>
+      </div>
+
       <!-- PLAYING STATE -->
       <div id="spotify-playing-state" class="spotify-bar-inner" style="display:none">
         <div class="spotify-cover-wrap">
@@ -747,133 +757,171 @@
       setTimeout(()=>t.classList.add('hidden'),3000);
     };
 
-    // ── SPOTIFY (PKCE flow) ──────────────────────────
+    // ── SPOTIFY ──────────────────────────────────────
+    // Architektura: VY se přihlásíte jednou na PC → váš prohlížeč
+    // ukládá skladbu do Firebase každých 5s → diváci čtou z Firebase
+    // bez přihlášení na jakémkoliv zařízení.
+
     const SPOTIFY_CLIENT_ID = '80efdd3b6963441185a7beff588c29f0';
     const SPOTIFY_REDIRECT  = 'https://flex59599.github.io/msl-liga/';
     const SPOTIFY_SCOPES    = 'user-read-currently-playing user-read-playback-state';
 
     let spotifyToken = null;
-    let spotifyInterval = null;
+    let spotifyPollInterval = null;
     let spotifyProgressInterval = null;
     let spotifyCurrentMs = 0;
     let spotifyDurationMs = 1;
 
     // PKCE helpers
-    function generateRandom(len) {
-      const arr = new Uint8Array(len);
-      crypto.getRandomValues(arr);
-      return Array.from(arr, b => b.toString(16).padStart(2,'0')).join('');
+    function spRandom(len) {
+      const a = new Uint8Array(len); crypto.getRandomValues(a);
+      return Array.from(a, b => b.toString(16).padStart(2,'0')).join('');
     }
-    async function sha256(plain) {
-      const enc = new TextEncoder().encode(plain);
-      return crypto.subtle.digest('SHA-256', enc);
+    async function spSha256(plain) {
+      return crypto.subtle.digest('SHA-256', new TextEncoder().encode(plain));
     }
-    function base64urlencode(buf) {
+    function spB64(buf) {
       return btoa(String.fromCharCode(...new Uint8Array(buf)))
-        .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+        .replace(/[+]/g,'-').replace(/[/]/g,'_').replace(/=+$/,'');
     }
 
+    // ── LOGIN (jen admin/vy) ──────────────────────────
     window.spotifyLogin = async function() {
-      const verifier = generateRandom(64);
-      const challenge = base64urlencode(await sha256(verifier));
-      localStorage.setItem('spotify_verifier', verifier);
-      const url = 'https://accounts.spotify.com/authorize' +
-        '?client_id=' + SPOTIFY_CLIENT_ID +
-        '&response_type=code' +
-        '&redirect_uri=' + encodeURIComponent(SPOTIFY_REDIRECT) +
-        '&scope=' + encodeURIComponent(SPOTIFY_SCOPES) +
-        '&code_challenge_method=S256' +
-        '&code_challenge=' + challenge;
-      window.location.href = url;
+      const verifier = spRandom(64);
+      localStorage.setItem('sp_verifier', verifier);
+      const challenge = spB64(await spSha256(verifier));
+      window.location.href = 'https://accounts.spotify.com/authorize'
+        + '?client_id=' + SPOTIFY_CLIENT_ID
+        + '&response_type=code'
+        + '&redirect_uri=' + encodeURIComponent(SPOTIFY_REDIRECT)
+        + '&scope=' + encodeURIComponent(SPOTIFY_SCOPES)
+        + '&code_challenge_method=S256'
+        + '&code_challenge=' + challenge;
     };
 
-    async function spotifyCheckCallback() {
+    // ── INIT ─────────────────────────────────────────
+    async function spotifyInit() {
+      // 1. Zkontroluj callback (code v URL)
       const params = new URLSearchParams(window.location.search);
       const code = params.get('code');
       if (code) {
-        // Exchange code for token
         history.replaceState(null, null, window.location.pathname);
-        const verifier = localStorage.getItem('spotify_verifier');
+        const verifier = localStorage.getItem('sp_verifier');
         try {
           const res = await fetch('https://accounts.spotify.com/api/token', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: {'Content-Type':'application/x-www-form-urlencoded'},
             body: new URLSearchParams({
               grant_type: 'authorization_code',
-              code,
-              redirect_uri: SPOTIFY_REDIRECT,
-              client_id: SPOTIFY_CLIENT_ID,
-              code_verifier: verifier
+              code, redirect_uri: SPOTIFY_REDIRECT,
+              client_id: SPOTIFY_CLIENT_ID, code_verifier: verifier
             })
           });
-          const data = await res.json();
-          if (data.access_token) {
-            spotifyToken = data.access_token;
-            localStorage.setItem('spotify_token', spotifyToken);
-            if (data.refresh_token) localStorage.setItem('spotify_refresh', data.refresh_token);
-            startSpotifyPolling();
+          const d = await res.json();
+          if (d.access_token) {
+            spotifyToken = d.access_token;
+            localStorage.setItem('sp_token', spotifyToken);
+            startAdminSpotifyPolling();
             return;
           }
-        } catch(e) { console.warn('Token exchange failed', e); }
+        } catch(e) { console.warn('Spotify token error', e); }
       }
-      // Try stored token
-      const stored = localStorage.getItem('spotify_token');
+
+      // 2. Zkus uložený token
+      const stored = localStorage.getItem('sp_token');
       if (stored) {
         spotifyToken = stored;
-        startSpotifyPolling();
-      } else {
-        showSpotifyLoginBar();
+        startAdminSpotifyPolling();
+        return;
       }
+
+      // 3. Čti z Firebase (divák bez přihlášení)
+      listenSpotifyFromFirebase();
     }
 
-    function showSpotifyLoginBar() {
-      document.getElementById('spotify-login-state').style.display = 'flex';
-      document.getElementById('spotify-playing-state').style.display = 'none';
-    }
-
-    function startSpotifyPolling() {
+    // ── ADMIN: polling Spotify API + ukládání do Firebase ──
+    function startAdminSpotifyPolling() {
+      // Skryj login, zobraz playing state
       document.getElementById('spotify-login-state').style.display = 'none';
       document.getElementById('spotify-playing-state').style.display = 'flex';
-      fetchNowPlaying();
-      spotifyInterval = setInterval(fetchNowPlaying, 5000);
+      fetchAndSaveNowPlaying();
+      spotifyPollInterval = setInterval(fetchAndSaveNowPlaying, 5000);
     }
 
-    async function fetchNowPlaying() {
+    async function fetchAndSaveNowPlaying() {
       if (!spotifyToken) return;
       try {
         const res = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
-          headers: { 'Authorization': 'Bearer ' + spotifyToken }
+          headers: {'Authorization': 'Bearer ' + spotifyToken}
         });
         if (res.status === 401) {
+          // Token expiroval
           spotifyToken = null;
-          localStorage.removeItem('spotify_token');
-          clearInterval(spotifyInterval);
-          showSpotifyLoginBar();
+          localStorage.removeItem('sp_token');
+          clearInterval(spotifyPollInterval);
+          document.getElementById('spotify-login-state').style.display = 'flex';
+          document.getElementById('spotify-playing-state').style.display = 'none';
           return;
         }
-        if (res.status === 204 || !res.ok) { updateSpotifyBar(null); return; }
-        updateSpotifyBar(await res.json());
-      } catch(e) { console.warn('Spotify error:', e); }
+        if (res.status === 204 || !res.ok) {
+          // Nic nehraje
+          await set(ref(db, 'spotify'), null);
+          return;
+        }
+        const data = await res.json();
+        if (!data.item) return;
+        // Ulož do Firebase
+        const track = data.item;
+        await set(ref(db, 'spotify'), {
+          name:       track.name,
+          artist:     track.artists.map(a=>a.name).join(', '),
+          cover:      track.album.images[1]?.url || track.album.images[0]?.url || '',
+          progressMs: data.progress_ms || 0,
+          durationMs: track.duration_ms || 1,
+          isPlaying:  data.is_playing,
+          updatedAt:  Date.now()
+        });
+        // Zobraz lokálně
+        renderSpotifyBar(track.name, track.artists.map(a=>a.name).join(', '),
+          track.album.images[1]?.url || track.album.images[0]?.url || '',
+          data.progress_ms, track.duration_ms, data.is_playing);
+      } catch(e) { console.warn('Spotify poll error', e); }
     }
 
-    function updateSpotifyBar(data) {
-      if (!data || !data.item) { clearInterval(spotifyProgressInterval); return; }
+    // ── DIVÁK: čtení z Firebase ───────────────────────
+    function listenSpotifyFromFirebase() {
+      onValue(ref(db, 'spotify'), snap => {
+        const d = snap.val();
+        if (!d || !d.name) {
+          // Nic nehraje – skryj playing, zobraz jen playlist tlačítko
+          document.getElementById('spotify-login-state').style.display = 'none';
+          document.getElementById('spotify-playing-state').style.display = 'none';
+          document.getElementById('spotify-offline').style.display = 'flex';
+          return;
+        }
+        document.getElementById('spotify-offline').style.display = 'none';
+        // Dopočítej progress (Firebase data jsou max 5s stará)
+        const elapsed = Date.now() - (d.updatedAt || Date.now());
+        const currentMs = d.isPlaying ? Math.min(d.progressMs + elapsed, d.durationMs) : d.progressMs;
+        renderSpotifyBar(d.name, d.artist, d.cover, currentMs, d.durationMs, d.isPlaying);
+      });
+    }
+
+    // ── RENDER ────────────────────────────────────────
+    function renderSpotifyBar(name, artist, cover, progressMs, durationMs, isPlaying) {
       document.getElementById('spotify-login-state').style.display = 'none';
       document.getElementById('spotify-playing-state').style.display = 'flex';
-      const track   = data.item;
-      const artists = track.artists.map(a => a.name).join(', ');
-      const cover   = track.album.images[1]?.url || track.album.images[0]?.url || '';
-      document.getElementById('spotify-track').textContent  = track.name;
-      document.getElementById('spotify-artist').textContent = artists;
+      document.getElementById('spotify-track').textContent  = name;
+      document.getElementById('spotify-artist').textContent = artist;
       const img = document.getElementById('spotify-cover');
-      if (img && img.src !== cover) img.src = cover;
-      spotifyCurrentMs  = data.progress_ms || 0;
-      spotifyDurationMs = track.duration_ms || 1;
+      if (img && img.getAttribute('src') !== cover) img.src = cover;
+      spotifyCurrentMs  = progressMs || 0;
+      spotifyDurationMs = durationMs || 1;
       updateSpotifyProgress();
       const eq = document.getElementById('spotify-eq');
-      if (eq) eq.classList.toggle('eq-playing', data.is_playing);
+      if (eq) eq.classList.toggle('eq-playing', isPlaying);
       clearInterval(spotifyProgressInterval);
-      if (data.is_playing) {
+      if (isPlaying) {
         spotifyProgressInterval = setInterval(() => {
           spotifyCurrentMs = Math.min(spotifyCurrentMs + 500, spotifyDurationMs);
           updateSpotifyProgress();
@@ -882,7 +930,7 @@
     }
 
     function updateSpotifyProgress() {
-      const pct = Math.min(100, (spotifyCurrentMs / spotifyDurationMs) * 100);
+      const pct  = Math.min(100, (spotifyCurrentMs / spotifyDurationMs) * 100);
       const fill = document.getElementById('spotify-progress');
       const pos  = document.getElementById('spotify-pos');
       const dur  = document.getElementById('spotify-dur');
@@ -897,7 +945,7 @@
     }
 
     // Init
-    spotifyCheckCallback();
+    spotifyInit();
 
 
     function updateClock(){ const el=document.getElementById('footer-time'); if(el) el.textContent=new Date().toLocaleTimeString('cs-CZ'); }
