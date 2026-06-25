@@ -11,7 +11,7 @@
 </head>
 <body>
   <div id="app">
-
+ 
     <!-- LOGIN OVERLAY -->
     <div id="login-overlay" class="hidden">
       <div class="login-box">
@@ -31,7 +31,7 @@
         <button class="btn-ghost" onclick="closeLogin()">← Zpět na výsledky</button>
       </div>
     </div>
-
+ 
     <!-- HEADER -->
     <header class="main-header">
       <div class="header-inner">
@@ -52,7 +52,7 @@
         </nav>
       </div>
     </header>
-
+ 
     <!-- PRÁVĚ NA TRATI BANNER -->
     <div id="on-track-banner" class="on-track-banner hidden">
       <div class="on-track-inner">
@@ -64,8 +64,8 @@
         <span class="on-track-cat" id="on-track-cat"></span>
       </div>
     </div>
-
-
+ 
+ 
     <!-- SPOTIFY NOW PLAYING BANNER -->
     <div id="spotify-bar" class="spotify-bar hidden">
       <div class="spotify-bar-inner">
@@ -94,10 +94,10 @@
         </a>
       </div>
     </div>
-
+ 
     <!-- MAIN CONTENT -->
     <main class="main-content">
-
+ 
       <!-- RESULTS PAGE -->
       <div id="page-results" class="page active">
         <div class="page-header">
@@ -136,7 +136,7 @@
           </table>
         </div>
       </div>
-
+ 
       <!-- START LIST PAGE -->
       <div id="page-startlist" class="page hidden">
         <div class="page-header">
@@ -160,16 +160,16 @@
           </table>
         </div>
       </div>
-
+ 
       <!-- ADMIN PAGE -->
       <div id="page-admin" class="page hidden">
         <div class="page-header">
           <h1 class="page-title">⚙ Administrace</h1>
           <button class="btn-danger-sm" onclick="handleLogout()">Odhlásit se</button>
         </div>
-
+ 
         <div class="admin-grid">
-
+ 
           <!-- QUICK RESULT FORM -->
           <div class="admin-card card-primary">
             <div class="card-header"><h2>⚡ Rychlé zadání výsledku</h2></div>
@@ -217,7 +217,7 @@
               <div id="result-msg" class="msg hidden"></div>
             </div>
           </div>
-
+ 
           <!-- ON TRACK CONTROL -->
           <div class="admin-card card-ontrack">
             <div class="card-header"><h2>🏃 Na trati – ovládání</h2></div>
@@ -229,7 +229,7 @@
               </div>
             </div>
           </div>
-
+ 
           <!-- EVENT SETTINGS -->
           <div class="admin-card">
             <div class="card-header"><h2>📅 Nastavení závodu</h2></div>
@@ -245,7 +245,7 @@
               <button class="btn-primary" onclick="saveEventSettings()">Uložit nastavení</button>
             </div>
           </div>
-
+ 
           <!-- TEAMS MANAGEMENT -->
           <div class="admin-card">
             <div class="card-header"><h2>🏆 Správa týmů</h2></div>
@@ -272,7 +272,7 @@
               <div class="teams-list" id="teams-list"></div>
             </div>
           </div>
-
+ 
           <!-- STARTLIST MANAGEMENT -->
           <div class="admin-card">
             <div class="card-header"><h2>📋 Sestavení startovní listiny</h2></div>
@@ -307,7 +307,7 @@
               <div class="admin-startlist-preview" id="admin-startlist-preview"></div>
             </div>
           </div>
-
+ 
           <!-- RESULTS MANAGEMENT -->
           <div class="admin-card card-wide">
             <div class="card-header">
@@ -333,28 +333,28 @@
               </table>
             </div>
           </div>
-
+ 
         </div>
       </div>
-
+ 
     </main>
-
+ 
     <footer class="main-footer">
       <div class="footer-inner">
         <span>🔥 MSL – Moravskoslezská liga požárního sportu</span>
         <span id="footer-time"></span>
       </div>
     </footer>
-
+ 
     <div id="toast" class="toast hidden"></div>
   </div>
-
+ 
   <!-- FIREBASE SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getDatabase, ref, set, get, push, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
+ 
     const firebaseConfig = {
       apiKey: "AIzaSyCiqu4GDNmx7ALTAF1GPi6rJ-F8AuHxNL4",
       authDomain: "msl-a4938.firebaseapp.com",
@@ -364,11 +364,11 @@
       messagingSenderId: "233603290123",
       appId: "1:233603290123:web:074a734d3dcf4c12a0630e"
     };
-
+ 
     const app = initializeApp(firebaseConfig);
     const db  = getDatabase(app);
     const auth = getAuth(app);
-
+ 
     // ── STATE ─────────────────────────────────────────
     let currentUser = null;
     let currentCategory = 'muzi';
@@ -377,13 +377,13 @@
     let allStartlist = {};
     let eventSettings = {};
     let onTrackEntry  = null;  // { id, teamName, category }
-
+ 
     // ── AUTH ──────────────────────────────────────────
     onAuthStateChanged(auth, user => {
       currentUser = user;
       document.getElementById('nav-admin').classList.toggle('logged-in', !!user);
     });
-
+ 
     window.handleLogin = async function() {
       const email = document.getElementById('login-email').value.trim();
       const pass  = document.getElementById('login-password').value;
@@ -410,7 +410,7 @@
     };
     window.closeLogin = function() { document.getElementById('login-overlay').classList.add('hidden'); };
     document.getElementById('login-password').addEventListener('keydown', e => { if(e.key==='Enter') window.handleLogin(); });
-
+ 
     // ── REALTIME LISTENERS ────────────────────────────
     onValue(ref(db,'results'), snap => {
       allResults = snap.val() || {};
@@ -446,7 +446,7 @@
       // Refresh startlist highlight
       renderStartlist();
     });
-
+ 
     // ── ON TRACK ─────────────────────────────────────
     window.setOnTrack = async function(entryId) {
       const entry = allStartlist[entryId];
@@ -459,12 +459,12 @@
       });
       showToast(`🏃 ${entry.teamName} je na trati!`, 'success');
     };
-
+ 
     window.clearOnTrack = async function() {
       await set(ref(db,'ontrack'), null);
       showToast('Nikdo na trati');
     };
-
+ 
     function renderOnTrackBanner() {
       const banner = document.getElementById('on-track-banner');
       const nameEl = document.getElementById('on-track-name');
@@ -477,7 +477,7 @@
         banner.classList.add('hidden');
       }
     }
-
+ 
     function renderOnTrackList() {
       const el = document.getElementById('ontrack-list');
       if (!el) return;
@@ -498,7 +498,7 @@
         </button>`;
       }).join('');
     }
-
+ 
     // ── RESULTS ───────────────────────────────────────
     function parseTime(str) {
       if (!str) return null;
@@ -524,7 +524,7 @@
         return 0;
       });
     }
-
+ 
     window.renderResults = function() {
       const tbody = document.getElementById('results-body');
       if (!tbody) return;
@@ -554,13 +554,13 @@
       tbody.style.opacity='0.4';
       setTimeout(()=>{ tbody.innerHTML=html; tbody.style.opacity='1'; },120);
     };
-
+ 
     window.selectCategory = function(cat) {
       currentCategory = cat;
       document.querySelectorAll('#category-tabs .cat-tab').forEach(b => b.classList.toggle('active', b.dataset.cat===cat));
       renderResults();
     };
-
+ 
     // ── STARTLIST PUBLIC ──────────────────────────────
     window.renderStartlist = function() {
       const tbody = document.getElementById('startlist-body');
@@ -583,7 +583,7 @@
         </tr>`;
       }).join('');
     };
-
+ 
     // ── ADMIN STARTLIST PREVIEW ───────────────────────
     function renderAdminStartlistPreview() {
       const el = document.getElementById('admin-startlist-preview');
@@ -599,7 +599,7 @@
             <button class="btn-danger-sm preview-del" onclick="deleteStartEntry('${e.id}')">✕</button>
           </div>`).join('');
     }
-
+ 
     // ── ADMIN RESULTS ─────────────────────────────────
     window.saveResult = async function() {
       const cat = document.getElementById('r-category').value;
@@ -654,7 +654,7 @@
       await remove(ref(db,`results/${cat}`));
       showToast('Smazáno');
     };
-
+ 
     // ── ADMIN TEAMS ───────────────────────────────────
     window.addTeam = async function() {
       const name = document.getElementById('new-team-name').value.trim();
@@ -691,7 +691,7 @@
         if (cv) sel.value=cv;
       });
     };
-
+ 
     // ── ADMIN STARTLIST ───────────────────────────────
     window.addStartEntry = async function() {
       const num     = document.getElementById('sl-number').value;
@@ -713,7 +713,7 @@
       await remove(ref(db,'startlist'));
       await set(ref(db,'ontrack'),null);
     };
-
+ 
     // ── EVENT SETTINGS ────────────────────────────────
     window.saveEventSettings = async function() {
       const name = document.getElementById('event-name-input').value.trim();
@@ -721,7 +721,7 @@
       await set(ref(db,'event'),{name,date});
       showToast('✓ Uloženo','success');
     };
-
+ 
     // ── NAVIGATION ────────────────────────────────────
     window.showPage = function(page) {
       if (page==='admin'&&!currentUser) { window.showAdminOrLogin(); return; }
@@ -733,7 +733,7 @@
       });
       if (page==='admin') { renderAdminResults(); renderTeamsList(); populateTeamSelects(); renderOnTrackList(); }
     };
-
+ 
     // ── HELPERS ───────────────────────────────────────
     function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
     function categoryLabel(c){ return {muzi:'Muži',zeny:'Ženy',dorost:'Dorost',muzi35:'Muži 35+',zeny35:'Ženy 35+',muzi50:'Muži 50+'}[c]||c; }
@@ -744,20 +744,20 @@
       t.textContent=msg; t.className=`toast toast-${type}`;
       setTimeout(()=>t.classList.add('hidden'),3000);
     };
-
+ 
     // ── SPOTIFY ───────────────────────────────────────
     const SPOTIFY_CLIENT_ID = '80efdd3b6963441185a7beff588c29f0';
     const SPOTIFY_REDIRECT   = 'https://flex59599.github.io/msl-liga/';
     const SPOTIFY_PLAYLIST   = 'https://open.spotify.com/playlist/036pMS1gt10q1tbRdTwCSM?si=c2522ebb9ba141a0&pt=76844afb646dcb49194afb37839fc377';
     const SPOTIFY_SCOPES     = 'user-read-currently-playing user-read-playback-state';
-
+ 
     let spotifyToken = null;
     let spotifyInterval = null;
     let spotifyProgressInterval = null;
     let spotifyCurrentMs = 0;
     let spotifyDurationMs = 0;
     let spotifyIsPlaying = false;
-
+ 
     // Check for token in URL hash (after OAuth redirect)
     function spotifyCheckCallback() {
       const hash = window.location.hash;
@@ -779,7 +779,7 @@
         }
       }
     }
-
+ 
     window.spotifyLogin = function() {
       const url = 'https://accounts.spotify.com/authorize' +
         '?client_id=' + SPOTIFY_CLIENT_ID +
@@ -789,13 +789,13 @@
         '&show_dialog=false';
       window.location.href = url;
     };
-
+ 
     function showSpotifyLoginBar() {
       document.getElementById('spotify-bar').classList.remove('hidden');
       document.getElementById('spotify-login-state').style.display = 'flex';
       document.getElementById('spotify-playing-state').style.display = 'none';
     }
-
+ 
     function startSpotifyPolling() {
       // Hide login, show playing state container
       document.getElementById('spotify-login-state').style.display = 'none';
@@ -803,7 +803,7 @@
       fetchNowPlaying();
       spotifyInterval = setInterval(fetchNowPlaying, 5000);
     }
-
+ 
     async function fetchNowPlaying() {
       if (!spotifyToken) return;
       try {
@@ -829,7 +829,7 @@
         console.warn('Spotify fetch error:', e);
       }
     }
-
+ 
     function updateSpotifyBar(data) {
       const bar = document.getElementById('spotify-bar');
       if (!data || !data.item) {
@@ -841,27 +841,27 @@
       bar.classList.remove('hidden');
       document.getElementById('spotify-login-state').style.display = 'none';
       document.getElementById('spotify-playing-state').style.display = 'block';
-
+ 
       const track   = data.item;
       const artists = track.artists.map(a => a.name).join(', ');
       const cover   = track.album.images[1]?.url || track.album.images[0]?.url || '';
-
+ 
       document.getElementById('spotify-track').textContent  = track.name;
       document.getElementById('spotify-artist').textContent = artists;
-
+ 
       const img = document.getElementById('spotify-cover');
       if (img && img.src !== cover) img.src = cover;
-
+ 
       spotifyCurrentMs  = data.progress_ms || 0;
       spotifyDurationMs = track.duration_ms || 1;
       spotifyIsPlaying  = data.is_playing;
-
+ 
       updateSpotifyProgress();
-
+ 
       // EQ animation
       const eq = document.getElementById('spotify-eq');
       if (eq) eq.classList.toggle('eq-playing', data.is_playing);
-
+ 
       // Start local progress ticker
       clearInterval(spotifyProgressInterval);
       if (data.is_playing) {
@@ -872,7 +872,7 @@
         }, 500);
       }
     }
-
+ 
     function updateSpotifyProgress() {
       const pct = Math.min(100, (spotifyCurrentMs / spotifyDurationMs) * 100);
       const fill = document.getElementById('spotify-progress');
@@ -882,25 +882,25 @@
       if (pos)  pos.textContent  = msToTime(spotifyCurrentMs);
       if (dur)  dur.textContent  = msToTime(spotifyDurationMs);
     }
-
+ 
     function msToTime(ms) {
       const s   = Math.floor(ms / 1000);
       const min = Math.floor(s / 60);
       const sec = s % 60;
       return min + ':' + (sec < 10 ? '0' : '') + sec;
     }
-
+ 
     // Init Spotify on load
     // Always start with login state visible
     document.getElementById('spotify-bar').classList.remove('hidden');
     document.getElementById('spotify-login-state').style.display = 'flex';
     document.getElementById('spotify-playing-state').style.display = 'none';
     spotifyCheckCallback();
-
-
+ 
+ 
     function updateClock(){ const el=document.getElementById('footer-time'); if(el) el.textContent=new Date().toLocaleTimeString('cs-CZ'); }
     updateClock(); setInterval(updateClock,1000);
-
+ 
   </script>
   <script src="app.js"></script>
 </body>
