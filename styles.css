@@ -1168,3 +1168,12 @@ select option { background: var(--dark); }
   .spotify-track { max-width: 160px; font-size: 13px; }
   .spotify-artist { max-width: 160px; }
 }
+
+/* ─── SPOTIFY LOGIN STATE ────────────────────────── */
+.spotify-login-state {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  flex-wrap: wrap;
+}

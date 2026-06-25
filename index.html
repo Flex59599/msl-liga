@@ -89,7 +89,7 @@
             <span id="spotify-dur">0:00</span>
           </div>
         </div>
-        <a id="spotify-playlist-link" href="https://open.spotify.com/playlist/036pMS1gt10q1tbRdTwCSM" target="_blank" class="spotify-add-btn">
+        <a id="spotify-playlist-link" href="https://open.spotify.com/playlist/036pMS1gt10q1tbRdTwCSM?si=c2522ebb9ba141a0&pt=76844afb646dcb49194afb37839fc377" target="_blank" class="spotify-add-btn">
           + Přidat do playlistu
         </a>
       </div>
@@ -748,7 +748,7 @@
     // ── SPOTIFY ───────────────────────────────────────
     const SPOTIFY_CLIENT_ID = '80efdd3b6963441185a7beff588c29f0';
     const SPOTIFY_REDIRECT   = 'https://flex59599.github.io/msl-liga/';
-    const SPOTIFY_PLAYLIST   = 'https://open.spotify.com/playlist/036pMS1gt10q1tbRdTwCSM';
+    const SPOTIFY_PLAYLIST   = 'https://open.spotify.com/playlist/036pMS1gt10q1tbRdTwCSM?si=c2522ebb9ba141a0&pt=76844afb646dcb49194afb37839fc377';
     const SPOTIFY_SCOPES     = 'user-read-currently-playing user-read-playback-state';
 
     let spotifyToken = null;
@@ -791,15 +791,9 @@
     };
 
     function showSpotifyLoginBar() {
-      // Just show playlist link without login requirement for public viewers
-      // Only show login option subtly
-      const bar = document.getElementById('spotify-bar');
-      if (bar) {
-        bar.classList.remove('hidden');
-        document.getElementById('spotify-track').textContent = 'Klikněte pro přihlášení';
-        document.getElementById('spotify-artist').textContent = 'Pro zobrazení aktuální skladby';
-        document.querySelector('.spotify-cover-wrap').innerHTML = '<div class="spotify-cover-placeholder">♪</div>';
-      }
+      document.getElementById('spotify-bar').classList.remove('hidden');
+      document.getElementById('spotify-login-state').style.display = 'flex';
+      document.getElementById('spotify-playing-state').style.display = 'none';
     }
 
     function startSpotifyPolling() {
@@ -836,11 +830,14 @@
     function updateSpotifyBar(data) {
       const bar = document.getElementById('spotify-bar');
       if (!data || !data.item) {
-        bar.classList.add('hidden');
+        // Not playing – keep bar but show login or empty
         clearInterval(spotifyProgressInterval);
         return;
       }
+      // Show playing state
       bar.classList.remove('hidden');
+      document.getElementById('spotify-login-state').style.display = 'none';
+      document.getElementById('spotify-playing-state').style.display = 'block';
 
       const track   = data.item;
       const artists = track.artists.map(a => a.name).join(', ');
@@ -850,7 +847,7 @@
       document.getElementById('spotify-artist').textContent = artists;
 
       const img = document.getElementById('spotify-cover');
-      if (img.src !== cover) img.src = cover;
+      if (img && img.src !== cover) img.src = cover;
 
       spotifyCurrentMs  = data.progress_ms || 0;
       spotifyDurationMs = track.duration_ms || 1;
