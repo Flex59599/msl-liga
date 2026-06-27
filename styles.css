@@ -1177,3 +1177,139 @@ select option { background: var(--dark); }
   width: 100%;
   flex-wrap: wrap;
 }
+
+/* ─── CATEGORY AUTO-DISPLAY ──────────────────────── */
+.category-display {
+  background: var(--dark);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--neon);
+  min-width: 100px;
+  min-height: 38px;
+}
+
+/* ─── LIGOVY TOGGLE ──────────────────────────────── */
+.team-chip { flex-wrap: wrap; gap: 8px; }
+.team-chip-left  { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.team-chip-right { display: flex; align-items: center; gap: 10px; }
+
+.liga-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.liga-toggle input { display: none; }
+
+.liga-toggle-track {
+  width: 36px;
+  height: 20px;
+  background: var(--dark-border);
+  border-radius: 10px;
+  position: relative;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.liga-toggle input:checked ~ .liga-toggle-track {
+  background: var(--neon);
+}
+.liga-toggle-thumb {
+  position: absolute;
+  left: 2px; top: 2px;
+  width: 16px; height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: left 0.2s;
+}
+.liga-toggle input:checked ~ .liga-toggle-track .liga-toggle-thumb {
+  left: 18px;
+}
+.liga-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.liga-toggle input:checked ~ .liga-label {
+  color: var(--neon);
+}
+
+/* ─── CHECKBOX LABEL ─────────────────────────────── */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--neon);
+  cursor: pointer;
+}
+
+/* ─── DRAG & DROP STARTLIST ──────────────────────── */
+.drag-startlist {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--dark-border) transparent;
+}
+
+.drag-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--dark);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  cursor: grab;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.drag-row:active { cursor: grabbing; }
+
+.drag-row.dragging {
+  opacity: 0.4;
+  border-style: dashed;
+}
+
+.drag-row.drag-over {
+  border-color: var(--neon);
+  background: var(--neon-dim);
+  transform: scale(1.01);
+}
+
+.drag-handle {
+  font-size: 18px;
+  color: var(--text-muted);
+  cursor: grab;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.drag-num {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--neon);
+  min-width: 28px;
+  text-align: center;
+  background: var(--neon-dim);
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.drag-name { flex: 1; font-size: 14px; font-weight: 500; }
+.drag-cat  { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }

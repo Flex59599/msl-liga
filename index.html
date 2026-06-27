@@ -187,20 +187,14 @@
             <div class="card-header"><h2>⚡ Rychlé zadání výsledku</h2></div>
             <div class="admin-form">
               <div class="form-row">
-                <div class="form-group">
-                  <label>Kategorie</label>
-                  <select id="r-category">
-                    <option value="muzi">Muži</option>
-                    <option value="zeny">Ženy</option>
-                    <option value="dorost">Dorost</option>
-                    <option value="muzi35">Muži 35+</option>
-                    <option value="zeny35">Ženy 35+</option>
-                    <option value="muzi50">Muži 50+</option>
-                  </select>
-                </div>
                 <div class="form-group flex-grow">
                   <label>Tým</label>
-                  <select id="r-team"></select>
+                  <select id="r-team" onchange="autoFillCategory()"></select>
+                </div>
+                <div class="form-group">
+                  <label>Kategorie</label>
+                  <div id="r-category-display" class="category-display">–</div>
+                  <input type="hidden" id="r-category" value="" />
                 </div>
               </div>
               <div class="form-row">
@@ -278,6 +272,12 @@
                     <option value="muzi50">Muži 50+</option>
                   </select>
                 </div>
+                <div class="form-group" style="justify-content:flex-end;padding-top:18px">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="new-team-ligova" />
+                    <span>Ligový</span>
+                  </label>
+                </div>
               </div>
               <button class="btn-primary" onclick="addTeam()">➕ Přidat tým</button>
               <div id="teams-msg" class="msg hidden"></div>
@@ -286,10 +286,10 @@
           </div>
 
           <!-- STARTLIST MANAGEMENT -->
-          <div class="admin-card">
-            <div class="card-header"><h2>📋 Sestavení startovní listiny</h2></div>
+          <div class="admin-card card-wide">
+            <div class="card-header"><h2>📋 Startovní listina – sestavení a úpravy</h2></div>
             <div class="admin-form">
-              <p class="hint-text">Přidejte týmy v pořadí startu. Číslo = pořadí startu.</p>
+              <p class="hint-text">Přidejte tým a startovní číslo. Pořadí lze měnit přetažením ≡</p>
               <div class="form-row">
                 <div class="form-group" style="width:80px">
                   <label>Start č.</label>
@@ -316,7 +316,7 @@
                 <button class="btn-danger-sm" onclick="clearStartlist()">🗑 Vymazat vše</button>
               </div>
               <div id="startlist-msg" class="msg hidden"></div>
-              <div class="admin-startlist-preview" id="admin-startlist-preview"></div>
+              <div class="drag-startlist" id="drag-startlist"></div>
             </div>
           </div>
 
@@ -438,7 +438,7 @@
       allStartlist = snap.val() || {};
       renderStartlist();
       renderOnTrackList();
-      renderAdminStartlistPreview();
+      renderDragStartlist();
     });
     onValue(ref(db,'event'), snap => {
       eventSettings = snap.val() || {};
@@ -596,32 +596,72 @@
       }).join('');
     };
 
-    // ── ADMIN STARTLIST PREVIEW ───────────────────────
-    function renderAdminStartlistPreview() {
-      const el = document.getElementById('admin-startlist-preview');
+    // ── ADMIN STARTLIST DRAG&DROP ────────────────────
+    let dragSrcId = null;
+
+    function renderDragStartlist() {
+      const el = document.getElementById('drag-startlist');
       if (!el) return;
       const entries = Object.values(allStartlist).sort((a,b)=>(a.startNumber||0)-(b.startNumber||0));
-      if (entries.length===0) { el.innerHTML=''; return; }
-      el.innerHTML = `<div class="preview-title">Aktuální listina (${entries.length} týmů)</div>` +
-        entries.map(e=>`
-          <div class="preview-row">
-            <span class="preview-num">${e.startNumber}</span>
-            <span class="preview-name">${escHtml(e.teamName)}</span>
-            <span class="preview-cat">${categoryLabel(e.category)}</span>
-            <button class="btn-danger-sm preview-del" onclick="deleteStartEntry('${e.id}')">✕</button>
-          </div>`).join('');
+      if (entries.length===0) {
+        el.innerHTML='<div class="empty-state" style="padding:16px 0"><span>Přidejte první tým</span></div>';
+        return;
+      }
+      el.innerHTML = entries.map(e=>`
+        <div class="drag-row" draggable="true" data-id="${e.id}">
+          <span class="drag-handle">≡</span>
+          <span class="drag-num">${e.startNumber}</span>
+          <span class="drag-name">${escHtml(e.teamName)}</span>
+          <span class="drag-cat">${categoryLabel(e.category)}</span>
+          <button class="btn-danger-sm" onclick="deleteStartEntry('${e.id}')">✕</button>
+        </div>`).join('');
+
+      // Attach drag events
+      el.querySelectorAll('.drag-row').forEach(row => {
+        row.addEventListener('dragstart', e => {
+          dragSrcId = row.dataset.id;
+          row.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        row.addEventListener('dragend', () => row.classList.remove('dragging'));
+        row.addEventListener('dragover', e => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          row.classList.add('drag-over');
+        });
+        row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+        row.addEventListener('drop', async e => {
+          e.preventDefault();
+          row.classList.remove('drag-over');
+          if (dragSrcId === row.dataset.id) return;
+          // Swap start numbers between the two entries
+          const srcEntry = allStartlist[dragSrcId];
+          const dstEntry = allStartlist[row.dataset.id];
+          if (!srcEntry || !dstEntry) return;
+          const srcNum = srcEntry.startNumber;
+          const dstNum = dstEntry.startNumber;
+          await set(ref(db,`startlist/${dragSrcId}/startNumber`), dstNum);
+          await set(ref(db,`startlist/${row.dataset.id}/startNumber`), srcNum);
+          showToast('✓ Pořadí změněno');
+        });
+      });
     }
+
+    // Keep old name for backward compat
+    function renderAdminStartlistPreview() { renderDragStartlist(); }
 
     // ── ADMIN RESULTS ─────────────────────────────────
     window.saveResult = async function() {
-      const cat = document.getElementById('r-category').value;
       const teamSel = document.getElementById('r-team');
-      const teamName = teamSel.options[teamSel.selectedIndex]?.text?.split(' (')[0] || '';
-      const teamId = teamSel.value;
-      const left = document.getElementById('r-left').value.trim();
-      const right = document.getElementById('r-right').value.trim();
-      const status = document.getElementById('r-status').value;
+      const teamId  = teamSel.value;
+      const opt     = teamSel.options[teamSel.selectedIndex];
+      const teamName = opt ? opt.text.split(' (')[0] : '';
+      const cat     = document.getElementById('r-category').value;
+      const left    = document.getElementById('r-left').value.trim();
+      const right   = document.getElementById('r-right').value.trim();
+      const status  = document.getElementById('r-status').value;
       if (!teamId) { showMsg('result-msg','Vyberte tým!','error'); return; }
+      if (!cat)    { showMsg('result-msg','Tým nemá kategorii!','error'); return; }
       if (status==='OK' && (!left||!right)) { showMsg('result-msg','Vyplňte oba časy!','error'); return; }
       try {
         await set(ref(db,`results/${cat}/${teamId}`), { id:teamId, teamName, leftTime:left||null, rightTime:right||null, status, updatedAt:Date.now() });
@@ -669,13 +709,19 @@
 
     // ── ADMIN TEAMS ───────────────────────────────────
     window.addTeam = async function() {
-      const name = document.getElementById('new-team-name').value.trim();
-      const cat  = document.getElementById('new-team-cat').value;
+      const name   = document.getElementById('new-team-name').value.trim();
+      const cat    = document.getElementById('new-team-cat').value;
+      const ligova = document.getElementById('new-team-ligova').checked;
       if (!name) { showMsg('teams-msg','Zadejte název!','error'); return; }
       const r = push(ref(db,'teams'));
-      await set(r,{id:r.key, name, category:cat});
+      await set(r,{id:r.key, name, category:cat, ligova});
       document.getElementById('new-team-name').value='';
+      document.getElementById('new-team-ligova').checked=false;
       showMsg('teams-msg',`✓ "${name}" přidán`,'success');
+    };
+
+    window.toggleLigova = async function(id, val) {
+      await set(ref(db,`teams/${id}/ligova`), val);
     };
     window.deleteTeam = async function(id) {
       if (!confirm('Smazat?')) return;
@@ -688,8 +734,20 @@
       if (teams.length===0) { el.innerHTML='<p class="empty-teams">Žádné týmy</p>'; return; }
       el.innerHTML = teams.map(t=>`
         <div class="team-chip">
-          <div><span class="team-chip-name">${escHtml(t.name)}</span><span class="team-chip-cat">${categoryLabel(t.category)}</span></div>
-          <button class="btn-danger-sm" onclick="deleteTeam('${t.id}')">✕</button>
+          <div class="team-chip-left">
+            <span class="team-chip-name">${escHtml(t.name)}</span>
+            <span class="team-chip-cat">${categoryLabel(t.category)}</span>
+          </div>
+          <div class="team-chip-right">
+            <label class="liga-toggle" title="Ligový tým">
+              <input type="checkbox" ${t.ligova?'checked':''} onchange="toggleLigova('${t.id}', this.checked)" />
+              <span class="liga-toggle-track">
+                <span class="liga-toggle-thumb"></span>
+              </span>
+              <span class="liga-label">${t.ligova?'Ligový':'Neligový'}</span>
+            </label>
+            <button class="btn-danger-sm" onclick="deleteTeam('${t.id}')">✕</button>
+          </div>
         </div>`).join('');
     };
     window.populateTeamSelects = function() {
@@ -699,9 +757,18 @@
         const cv = sel.value;
         const teams = Object.values(allTeams).sort((a,b)=>a.name.localeCompare(b.name));
         sel.innerHTML = '<option value="">– Vyberte tým –</option>' +
-          teams.map(t=>`<option value="${t.id}">${escHtml(t.name)} (${categoryLabel(t.category)})</option>`).join('');
+          teams.map(t=>`<option value="${t.id}" data-cat="${t.category}">${escHtml(t.name)} (${categoryLabel(t.category)})</option>`).join('');
         if (cv) sel.value=cv;
       });
+    };
+
+    // Auto-fill category when team selected
+    window.autoFillCategory = function() {
+      const sel = document.getElementById('r-team');
+      const opt = sel.options[sel.selectedIndex];
+      const cat = opt ? opt.getAttribute('data-cat') : '';
+      document.getElementById('r-category').value = cat;
+      document.getElementById('r-category-display').textContent = cat ? categoryLabel(cat) : '–';
     };
 
     // ── ADMIN STARTLIST ───────────────────────────────
@@ -743,7 +810,7 @@
         const nav=document.getElementById(`nav-${p}`);
         if(nav) nav.classList.toggle('active',p===page);
       });
-      if (page==='admin') { renderAdminResults(); renderTeamsList(); populateTeamSelects(); renderOnTrackList(); }
+      if (page==='admin') { renderAdminResults(); renderTeamsList(); populateTeamSelects(); renderOnTrackList(); renderDragStartlist(); }
     };
 
     // ── HELPERS ───────────────────────────────────────
