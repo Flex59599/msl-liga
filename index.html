@@ -554,13 +554,22 @@
         const rankCell = isValid && dr<=3
           ? `<span class="rank-badge rank-${dr}">${dr}</span>`
           : dr;
+        // Find team ligova flag
+        const teamObj = Object.values(allTeams).find(t => t.name === r.teamName);
+        const isLigova = teamObj ? teamObj.ligova : false;
+        const mslBadge = isLigova
+          ? `<span class="msl-badge">MSL</span>`
+          : `<span class="msl-badge msl-badge-none">–</span>`;
+        const statusCell = r.status!=='OK'
+          ? `<span class="status-badge status-${r.status}">${r.status}</span>`
+          : `<span class="status-ok">✓</span>`;
         return `<tr class="result-row ${rc}">
           <td class="col-rank">${rankCell}</td>
           <td class="col-team">${escHtml(r.teamName||'?')}</td>
           <td class="col-time mono">${r.leftTime||'–'}</td>
           <td class="col-time mono">${r.rightTime||'–'}</td>
           <td class="col-result mono ${isValid?'result-time':'result-invalid'}">${isValid?formatResultTime(r):(r.status||'–')}</td>
-          <td class="col-status">${r.status!=='OK'?`<span class="status-badge status-${r.status}">${r.status}</span>`:'<span class="status-ok">✓</span>'}</td>
+          <td class="col-status">${statusCell} ${mslBadge}</td>
         </tr>`;
       }).join('');
       tbody.style.opacity='0.4';
